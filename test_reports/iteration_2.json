@@ -1,0 +1,48 @@
+{
+  "summary": "Full backend + frontend regression + new-feature testing pass for Rekap Cadangan KAI. Backend pytest: 19/19 passing (change-password happy/error/revert, activity/today admin+user, rekap start/end date validation + no-data + today-range positive, plus legacy CRUD/auth). Frontend: Change-password screen (empty/short/mismatch validations, real change + revert, login with new password) works. Admin sees both AKTIVITAS HARI INI and GANTI PASSWORD links; regular user sees only GANTI PASSWORD. Activity screen shows active + inactive Pusdal lists. Rekap screen has filter inputs, TERAPKAN/RESET buttons, UNDUH .TXT / SALIN side-by-side; both toggle to TERSIMPAN / TERSALIN; download actually produces a .txt file (rekap-cadangan-*.txt). Invalid date shows rekap-error box. Legacy tests updated for 9 categories and admin-only rekap. One minor UI issue found: sticky REKAP TEXT CTA overlaps the AKTIVITAS/GANTI PASSWORD link rows at initial mount on 390x844 viewport for admin.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "dashboard.tsx (admin sticky CTA)",
+        "issue": "The sticky bottom 'REKAP TEXT' CTA overlaps the 'AKTIVITAS HARI INI' and 'GANTI PASSWORD' link rows before the user scrolls. On 390x844 viewport, activity-link bbox y=831 sits under the CTA (y=775-832). ScrollView paddingBottom is 112 for admin but the links are placed AFTER the 9-item grid so they land at the fold. Increase paddingBottom to at least ~180 (or move the sticky CTA behind, or render the links above the grid) so tapping them without scrolling reliably reaches the correct target.",
+        "testID": "dashboard-activity-link, dashboard-change-password-link",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "dashboard (admin)",
+        "issues": ["Sticky REKAP TEXT bar visually overlays the two link rows at bottom on standard mobile viewport; users must scroll before the links become fully tappable."]
+      }
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/backend/tests/test_rekap_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Increase Dashboard ScrollView bottom padding for admin so AKTIVITAS HARI INI and GANTI PASSWORD link rows sit clearly above the sticky REKAP TEXT bar without needing to scroll (e.g. bump the admin extra padding from 80 to ~160), or reorder so the links sit before the grid.",
+    "(Optional) Consider stripping FastAPI on_event startup/shutdown warnings by migrating to lifespan — already flagged in iteration_1, non-blocking."
+  ],
+  "critical_code_review_comments": [
+    "server.py change_password: rehashes and verifies via bcrypt correctly; token remains valid after password change (JWT is stateless). Acceptable for MVP but consider invalidating old sessions in future.",
+    "activity_today uses updated_at range in UTC; if server timezone differs from user timezone this could show yesterday/tomorrow near midnight. Consider surfacing an Asia/Jakarta note or converting date server-side.",
+    "rekap date filter compares ISO strings (created_at is stored as ISO string, not BSON date). Works today because seed_users creates strings uniformly, but lexicographic comparison assumes trailing Z/offset stays consistent. Consistent everywhere in current code — OK.",
+    "rekap.tsx: expo-file-system/legacy import is used; long-term migrate to new File API when SDK bumps.",
+    "dashboard.tsx bottom padding calculation for admin (80px) is not enough to clear both the 57px sticky CTA and the newly added 2 link rows (~130px). See ui_bugs above."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/backend/tests/test_rekap_api.py"
+  ],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% functional, 1 minor overlap UX issue"},
+  "seed_data_creation": "Test entries prefixed TEST_ACT_ENTRY, TEST_FILTER_ONE, TEST_CC201-01, TEST_CC202-01 were created and cleaned up within test fixtures. Pusdal7 and Pusdal9 password change tests reverted their passwords back to 'pusdal123' at end. test_credentials.md remains valid.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend tests: /app/backend/tests/test_new_features.py (change-password, activity, rekap filters) + /app/backend/tests/test_rekap_api.py (updated for 9 categories + admin-only rekap). Run: EXPO_PUBLIC_BACKEND_URL=... pytest backend/tests/ -v. All new feature testIDs are stable: cp-old-input, cp-new-input, cp-confirm-input, cp-submit, cp-error, cp-success, change-password-back, activity-back, activity-refresh, activity-active-<idx>, rekap-start-input, rekap-end-input, rekap-filter-apply, rekap-filter-clear, rekap-download-button, rekap-copy-button, rekap-error, dashboard-activity-link, dashboard-change-password-link. On mobile viewport (390x844), the dashboard admin link rows are partially covered by the sticky REKAP TEXT CTA — use `scroll_into_view_if_needed()` before clicking.",
+  "rca_of_issue": "Sticky CTA overlap: dashboard.tsx line ~100 sets `paddingBottom: insets.bottom + spacing.xxl + (user.role === 'admin' ? 80 : spacing.lg)`. On admin, 80 extra is insufficient to lift the two newly-added link rows above the ~57px absolute-positioned bottom bar. Suggested fix: bump admin extra padding to 160-180 or restructure to place the links above the grid. Reproduction: login as admin on 390x844 mobile viewport → observe REKAP TEXT bar sits over the AKTIVITAS/GANTI PASSWORD rows until user scrolls up."
+}

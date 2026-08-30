@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -90,6 +90,11 @@ class EntryCreate(BaseModel):
 class EntryUpdate(BaseModel):
     nomor: Optional[str] = None
     keterangan: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
 
 
 class Entry(BaseModel):
@@ -289,11 +294,36 @@ async def delete_entry(category: str, entry_id: str, user: dict = Depends(get_cu
 
 
 @api_router.get("/rekap")
-async def get_rekap(user: dict = Depends(get_current_user)):
-    """Return all entries grouped by owner/region and category. ADMIN ONLY."""
+async def get_rekap(
+    user: dict = Depends(get_current_user),
+    start_date: Optional[str] = Query(None, description="ISO date YYYY-MM-DD (inclusive)"),
+    end_date: Optional[str] = Query(None, description="ISO date YYYY-MM-DD (inclusive)"),
+):
+    """Return all entries grouped by owner/region and category. ADMIN ONLY.
+
+    Optional date range filter uses `created_at` field.
+    """
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Hanya administrator yang dapat mengakses rekap")
-    docs = await db.entries.find({}, {"_id": 0}).sort([("owner", 1), ("category", 1), ("created_at", 1)]).to_list(100000)
+
+    query: dict = {}
+    date_filter: dict = {}
+    if start_date:
+        try:
+            datetime.fromisoformat(start_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="start_date harus format YYYY-MM-DD")
+        date_filter["$gte"] = f"{start_date}T00:00:00+00:00"
+    if end_date:
+        try:
+            datetime.fromisoformat(end_date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="end_date harus format YYYY-MM-DD")
+        date_filter["$lte"] = f"{end_date}T23:59:59.999999+00:00"
+    if date_filter:
+        query["created_at"] = date_filter
+
+    docs = await db.entries.find(query, {"_id": 0}).sort([("owner", 1), ("category", 1), ("created_at", 1)]).to_list(100000)
 
     # Group: region -> category -> [entries]
     grouped: dict = {}
@@ -323,7 +353,65 @@ async def get_rekap(user: dict = Depends(get_current_user)):
             if ckey in grouped[key]:
                 cats.append({"key": ckey, "label": clabel, "items": grouped[key][ckey]})
         result.append({"owner": owner, "region": region, "categories": cats})
-    return {"groups": result, "generated_at": datetime.now(timezone.utc).isoformat()}
+    return {
+        "groups": result,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+
+
+@api_router.post("/auth/change-password")
+async def change_password(body: ChangePasswordRequest, user: dict = Depends(get_current_user)):
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password baru minimal 6 karakter")
+    doc = await db.users.find_one({"username": user["username"]})
+    if not doc or not verify_password(body.old_password, doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Password lama salah")
+    await db.users.update_one(
+        {"username": user["username"]},
+        {"$set": {"password_hash": hash_password(body.new_password)}},
+    )
+    return {"ok": True, "message": "Password berhasil diubah"}
+
+
+@api_router.get("/activity/today")
+async def activity_today(user: dict = Depends(get_current_user)):
+    """Admin only. List Pusdal that added/edited data today, sorted by latest update."""
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Hanya administrator yang dapat mengakses aktivitas")
+    today = datetime.now(timezone.utc).date()
+    start_iso = f"{today.isoformat()}T00:00:00+00:00"
+    end_iso = f"{today.isoformat()}T23:59:59.999999+00:00"
+    pipeline = [
+        {"$match": {"updated_at": {"$gte": start_iso, "$lte": end_iso}}},
+        {
+            "$group": {
+                "_id": "$owner",
+                "region": {"$last": "$region"},
+                "count": {"$sum": 1},
+                "last_at": {"$max": "$updated_at"},
+            }
+        },
+        {"$sort": {"last_at": -1}},
+    ]
+    rows = []
+    async for doc in db.entries.aggregate(pipeline):
+        rows.append({
+            "owner": doc["_id"],
+            "region": doc.get("region", ""),
+            "count": doc.get("count", 0),
+            "last_at": doc.get("last_at", ""),
+        })
+    # Also include Pusdal with zero activity today so admin can spot gaps
+    active_owners = {r["owner"] for r in rows}
+    inactive = []
+    for username, role, region in SEED_USERS:
+        if role != "user":
+            continue
+        if username not in active_owners:
+            inactive.append({"owner": username, "region": region})
+    return {"active": rows, "inactive": inactive, "date": today.isoformat()}
 
 
 app.include_router(api_router)

@@ -78,6 +78,27 @@ export const api = {
     }),
   deleteEntry: (category: string, id: string) =>
     request<{ ok: boolean }>(`/api/entries/${category}/${id}`, { method: "DELETE" }),
-  rekap: () =>
-    request<{ groups: RekapGroup[]; generated_at: string }>("/api/rekap"),
+  rekap: (start_date?: string, end_date?: string) => {
+    const params = new URLSearchParams();
+    if (start_date) params.append("start_date", start_date);
+    if (end_date) params.append("end_date", end_date);
+    const qs = params.toString();
+    return request<{
+      groups: RekapGroup[];
+      generated_at: string;
+      start_date: string | null;
+      end_date: string | null;
+    }>(`/api/rekap${qs ? `?${qs}` : ""}`);
+  },
+  changePassword: (old_password: string, new_password: string) =>
+    request<{ ok: boolean; message: string }>("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ old_password, new_password }),
+    }),
+  activityToday: () =>
+    request<{
+      active: { owner: string; region: string; count: number; last_at: string }[];
+      inactive: { owner: string; region: string }[];
+      date: string;
+    }>("/api/activity/today"),
 };

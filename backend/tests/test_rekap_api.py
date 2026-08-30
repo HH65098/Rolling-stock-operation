@@ -5,7 +5,11 @@ import requests
 
 BASE = os.environ.get("EXPO_PUBLIC_BACKEND_URL", "https://railway-data-recap.preview.emergentagent.com").rstrip("/")
 API = f"{BASE}/api"
-CATS = ["tso_lokomotif", "tso_kereta", "tso_gerbong", "tsgo_lokomotif", "tsgo_kereta", "tsgo_gerbong"]
+CATS = [
+    "cadangan_lokomotif", "tso_lokomotif", "tsgo_lokomotif",
+    "cadangan_kereta", "tso_kereta", "tsgo_kereta",
+    "cadangan_gerbong", "tso_gerbong", "tsgo_gerbong",
+]
 
 
 def _login(u, p):
@@ -119,9 +123,9 @@ def test_entries_full_flow(user_token, user2_token, admin_token):
                         headers=H(user_token))
     assert bad.status_code == 400
 
-    # rekap - user only sees own
-    rekap = requests.get(f"{API}/rekap", headers=H(user_token)).json()
-    assert all(g["owner"] == "Pusdal1" for g in rekap["groups"])
+    # rekap - user (non-admin) now forbidden (admin-only endpoint)
+    rekap_u = requests.get(f"{API}/rekap", headers=H(user_token))
+    assert rekap_u.status_code == 403
 
     # rekap - admin sees multiple owners
     ra = requests.get(f"{API}/rekap", headers=H(admin_token)).json()

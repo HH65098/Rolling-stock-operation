@@ -97,7 +97,7 @@ export default function Dashboard() {
       <ScrollView
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl + (user.role === "admin" ? 80 : spacing.lg),
+          paddingBottom: insets.bottom + spacing.xxl + (user.role === "admin" ? 180 : spacing.lg),
           gap: spacing.md,
         }}
       >
@@ -128,6 +128,40 @@ export default function Dashboard() {
             </Pressable>
           ))}
         </View>
+
+        {user.role === "admin" && (
+          <Pressable
+            testID="dashboard-activity-link"
+            onPress={() => router.push("/activity")}
+            style={({ pressed }) => [
+              styles.linkRow,
+              pressed && { backgroundColor: colors.surfaceSecondary },
+            ]}
+          >
+            <Ionicons name="pulse" size={18} color={colors.brand} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.linkTitle}>AKTIVITAS HARI INI</Text>
+              <Text style={styles.linkSub}>Pusdal yang mengisi data hari ini</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
+          </Pressable>
+        )}
+
+        <Pressable
+          testID="dashboard-change-password-link"
+          onPress={() => router.push("/change-password")}
+          style={({ pressed }) => [
+            styles.linkRow,
+            pressed && { backgroundColor: colors.surfaceSecondary },
+          ]}
+        >
+          <Ionicons name="key" size={18} color={colors.brand} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.linkTitle}>GANTI PASSWORD</Text>
+            <Text style={styles.linkSub}>Ubah password akun {user.username}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
+        </Pressable>
 
         {user.role === "admin" && (
           <View style={styles.adminNote} testID="admin-note">
@@ -306,6 +340,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.5,
     fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+  },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+    backgroundColor: colors.surface,
+  },
+  linkTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    color: colors.onSurface,
+    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+  },
+  linkSub: {
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: 2,
   },
   rekapCta: {
     position: "absolute",
