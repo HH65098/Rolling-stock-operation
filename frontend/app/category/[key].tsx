@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,16 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing } from "@/src/lib/theme";
 import { api, Entry } from "@/src/lib/api";
+
+const mono = Platform.select({ ios: "Courier", android: "monospace" });
 
 const LABELS: Record<string, string> = {
   cadangan_lokomotif: "Cadangan Lokomotif",
@@ -45,6 +49,9 @@ export default function CategoryScreen() {
   const [nomor, setNomor] = useState("");
   const [keterangan, setKeterangan] = useState("");
 
+  // Search
+  const [search, setSearch] = useState("");
+
   const load = useCallback(async () => {
     if (!category) return;
     setError("");
@@ -65,6 +72,16 @@ export default function CategoryScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (it) =>
+        it.nomor.toLowerCase().includes(q) ||
+        (it.keterangan || "").toLowerCase().includes(q)
+    );
+  }, [items, search]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -113,24 +130,37 @@ export default function CategoryScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.wrap, { paddingTop: insets.top }]}
+      style={styles.wrap}
     >
-      {/* Sticky header */}
-      <View style={styles.header}>
-        <Pressable
-          testID="category-back-button"
-          onPress={() => router.back()}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>KATEGORI</Text>
-          <Text style={styles.headerTitle} testID="category-title">
-            {label}
-          </Text>
+      {/* Header */}
+      <LinearGradient
+        colors={[colors.kaiBlueDark, colors.kaiBlue]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + spacing.sm }]}
+      >
+        <View style={styles.headerRow}>
+          <Pressable
+            testID="category-back-button"
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="chevron-back" size={20} color="#FFF" />
+          </Pressable>
+          <Image
+            source={require("../../assets/images/kai-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerLabel}>KATEGORI</Text>
+            <Text style={styles.headerTitle} testID="category-title">
+              {label}
+            </Text>
+          </View>
         </View>
-      </View>
+        <View style={styles.orangeStripe} />
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
@@ -142,9 +172,16 @@ export default function CategoryScreen() {
       >
         {/* Form */}
         <View style={styles.formCard}>
-          <Text style={styles.formTitle}>
-            {editingId ? "UBAH DATA" : "TAMBAH DATA"}
-          </Text>
+          <View style={styles.formHead}>
+            <Ionicons
+              name={editingId ? "create" : "add-circle"}
+              size={16}
+              color={colors.brand}
+            />
+            <Text style={styles.formTitle}>
+              {editingId ? "UBAH DATA" : "TAMBAH DATA"}
+            </Text>
+          </View>
 
           <Text style={styles.inputLabel}>NOMOR</Text>
           <TextInput
@@ -162,7 +199,7 @@ export default function CategoryScreen() {
             testID="entry-keterangan-input"
             value={keterangan}
             onChangeText={setKeterangan}
-            style={[styles.input, { minHeight: 68, textAlignVertical: "top" }]}
+            style={[styles.input, { minHeight: 60, textAlignVertical: "top" }]}
             multiline
             placeholder="Catatan (opsional)"
             placeholderTextColor={colors.muted}
@@ -170,6 +207,7 @@ export default function CategoryScreen() {
 
           {!!error && (
             <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={14} color={colors.error} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -179,7 +217,7 @@ export default function CategoryScreen() {
               <Pressable
                 testID="entry-cancel-button"
                 onPress={resetForm}
-                style={[styles.secondaryBtn]}
+                style={styles.secondaryBtn}
               >
                 <Text style={styles.secondaryBtnText}>BATAL</Text>
               </Pressable>
@@ -188,20 +226,64 @@ export default function CategoryScreen() {
               testID="entry-submit-button"
               onPress={handleSubmit}
               disabled={saving}
-              style={[styles.primaryBtn, saving && { opacity: 0.8 }]}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                (pressed || saving) && { opacity: 0.9 },
+              ]}
             >
               {saving ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.primaryBtnText}>
-                  {editingId ? "SIMPAN" : "TAMBAH"}
-                </Text>
+                <>
+                  <Ionicons
+                    name={editingId ? "checkmark" : "add"}
+                    size={16}
+                    color="#FFF"
+                  />
+                  <Text style={styles.primaryBtnText}>
+                    {editingId ? "SIMPAN" : "TAMBAH"}
+                  </Text>
+                </>
               )}
             </Pressable>
           </View>
         </View>
 
-        {/* List */}
+        {/* Search */}
+        <View style={styles.searchWrap}>
+          <Ionicons
+            name="search"
+            size={16}
+            color={colors.kaiBlue}
+            style={{ marginRight: spacing.xs }}
+          />
+          <TextInput
+            testID="entry-search-input"
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchInput}
+            placeholder="Cari nomor atau keterangan…"
+            placeholderTextColor={colors.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {search.length > 0 && (
+            <Pressable
+              testID="entry-search-clear"
+              onPress={() => setSearch("")}
+              hitSlop={8}
+            >
+              <Ionicons name="close-circle" size={18} color={colors.muted} />
+            </Pressable>
+          )}
+        </View>
+        {search.length > 0 && (
+          <Text style={styles.searchInfo} testID="entry-search-info">
+            {filtered.length} dari {items.length} data cocok dengan &quot;{search}&quot;
+          </Text>
+        )}
+
+        {/* List Header */}
         <View style={styles.listHead}>
           <Text style={styles.listHeadCol1}>NO</Text>
           <Text style={styles.listHeadCol2}>NOMOR</Text>
@@ -213,12 +295,21 @@ export default function CategoryScreen() {
           <View style={styles.emptyBox}>
             <ActivityIndicator color={colors.brand} />
           </View>
-        ) : items.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <View style={styles.emptyBox} testID="entries-empty">
-            <Text style={styles.emptyText}>BELUM ADA DATA</Text>
+            <Ionicons
+              name={search ? "search" : "cube-outline"}
+              size={28}
+              color={colors.muted}
+            />
+            <Text style={styles.emptyText}>
+              {search
+                ? "TIDAK ADA HASIL PENCARIAN"
+                : "BELUM ADA DATA"}
+            </Text>
           </View>
         ) : (
-          items.map((it, idx) => (
+          filtered.map((it, idx) => (
             <View key={it.id} style={styles.row} testID={`entry-row-${idx}`}>
               <Text style={styles.rowCol1}>{String(idx + 1).padStart(2, "0")}</Text>
               <Text style={styles.rowCol2} numberOfLines={2}>
@@ -231,10 +322,10 @@ export default function CategoryScreen() {
                 <Pressable
                   testID={`entry-edit-${idx}`}
                   onPress={() => startEdit(it)}
-                  style={styles.iconBtn}
+                  style={[styles.iconBtn, { borderColor: colors.kaiBlue }]}
                   hitSlop={8}
                 >
-                  <Ionicons name="pencil" size={16} color={colors.onSurface} />
+                  <Ionicons name="pencil" size={14} color={colors.kaiBlue} />
                 </Pressable>
                 <Pressable
                   testID={`entry-delete-${idx}`}
@@ -242,7 +333,7 @@ export default function CategoryScreen() {
                   style={[styles.iconBtn, { borderColor: colors.error }]}
                   hitSlop={8}
                 >
-                  <Ionicons name="trash" size={16} color={colors.error} />
+                  <Ionicons name="trash" size={14} color={colors.error} />
                 </Pressable>
               </View>
             </View>
@@ -253,60 +344,73 @@ export default function CategoryScreen() {
   );
 }
 
-const mono = Platform.select({ ios: "Courier", android: "monospace" });
-
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: colors.surface },
+  wrap: { flex: 1, backgroundColor: colors.surfaceSecondary },
   header: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: 0,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderStrong,
+    paddingBottom: spacing.md,
   },
   backBtn: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: spacing.sm,
+    borderColor: "rgba(255,255,255,0.4)",
+    padding: spacing.xs,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
+  logo: { width: 40, height: 20 },
   headerLabel: {
-    fontSize: 10,
-    letterSpacing: 1.5,
-    color: colors.muted,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: "#BFDBFE",
     fontFamily: mono,
+    fontWeight: "800",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: colors.onSurface,
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#FFF",
+    letterSpacing: 0.5,
   },
+  orangeStripe: { height: 2, backgroundColor: colors.brand },
+
   formCard: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.brand,
     padding: spacing.md,
-    gap: spacing.xs,
+    backgroundColor: colors.surface,
+  },
+  formHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   formTitle: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 1.5,
-    color: colors.brand,
-    marginBottom: spacing.sm,
+    color: colors.onSurface,
     fontFamily: mono,
   },
   inputLabel: {
     fontSize: 10,
     letterSpacing: 1.2,
-    color: colors.onSurface,
-    fontWeight: "700",
+    color: colors.kaiBlueDark,
+    fontWeight: "800",
     marginTop: spacing.sm,
     fontFamily: mono,
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSecondary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     fontSize: 14,
@@ -315,13 +419,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   errorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
     borderWidth: 1,
     borderColor: colors.error,
     backgroundColor: "#FEF2F2",
     padding: spacing.sm,
     marginTop: spacing.sm,
   },
-  errorText: { color: colors.error, fontSize: 12, fontFamily: mono },
+  errorText: { color: colors.error, fontSize: 12, flex: 1, fontFamily: mono },
   formActions: {
     flexDirection: "row",
     gap: spacing.sm,
@@ -330,14 +437,15 @@ const styles = StyleSheet.create({
   primaryBtn: {
     flex: 1,
     backgroundColor: colors.brand,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: spacing.xs,
   },
   primaryBtnText: {
     color: "#FFF",
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 1.5,
     fontSize: 13,
   },
@@ -349,54 +457,80 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryBtnText: {
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 1.5,
     fontSize: 12,
     color: colors.onSurface,
   },
-  listHead: {
-    flexDirection: "row",
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.onSurface,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    marginTop: spacing.md,
-  },
-  listHeadCol1: { width: 32, color: "#FFF", fontSize: 10, fontWeight: "800", letterSpacing: 1, fontFamily: mono },
-  listHeadCol2: { flex: 1.2, color: "#FFF", fontSize: 10, fontWeight: "800", letterSpacing: 1, fontFamily: mono },
-  listHeadCol3: { flex: 1.6, color: "#FFF", fontSize: 10, fontWeight: "800", letterSpacing: 1, fontFamily: mono },
-  listHeadCol4: { width: 76, color: "#FFF", fontSize: 10, fontWeight: "800", letterSpacing: 1, textAlign: "right", fontFamily: mono },
-  row: {
+
+  // Search
+  searchWrap: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: colors.borderStrong,
+    borderColor: colors.kaiBlue,
+    backgroundColor: colors.kaiBlueSoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.kaiBlueDark,
+    fontFamily: mono,
+    paddingVertical: 0,
+  },
+  searchInfo: {
+    fontSize: 11,
+    color: colors.kaiBlueDark,
+    fontFamily: mono,
+    fontWeight: "700",
+  },
+
+  // List
+  listHead: {
+    flexDirection: "row",
+    backgroundColor: colors.kaiBlueDark,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
   },
-  rowCol1: { width: 32, fontSize: 12, color: colors.onSurface, fontFamily: mono },
-  rowCol2: { flex: 1.2, fontSize: 13, color: colors.onSurface, fontWeight: "700", fontFamily: mono },
+  listHeadCol1: { width: 32, color: "#FFF", fontSize: 10, fontWeight: "900", letterSpacing: 1, fontFamily: mono },
+  listHeadCol2: { flex: 1.2, color: "#FFF", fontSize: 10, fontWeight: "900", letterSpacing: 1, fontFamily: mono },
+  listHeadCol3: { flex: 1.6, color: "#FFF", fontSize: 10, fontWeight: "900", letterSpacing: 1, fontFamily: mono },
+  listHeadCol4: { width: 68, color: "#FFF", fontSize: 10, fontWeight: "900", letterSpacing: 1, textAlign: "right", fontFamily: mono },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+  },
+  rowCol1: { width: 32, fontSize: 12, color: colors.muted, fontFamily: mono },
+  rowCol2: { flex: 1.2, fontSize: 13, color: colors.onSurface, fontWeight: "800", fontFamily: mono },
   rowCol3: { flex: 1.6, fontSize: 12, color: colors.muted, fontFamily: mono, paddingRight: spacing.xs },
-  rowCol4: { width: 76, flexDirection: "row", gap: spacing.xs, justifyContent: "flex-end" },
+  rowCol4: { width: 68, flexDirection: "row", gap: spacing.xs, justifyContent: "flex-end" },
   iconBtn: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
     padding: spacing.xs,
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderTopWidth: 0,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: spacing.xl,
     alignItems: "center",
+    gap: spacing.sm,
   },
   emptyText: {
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: 1.5,
     color: colors.muted,
-    fontWeight: "700",
+    fontWeight: "800",
     fontFamily: mono,
   },
 });

@@ -1,4 +1,4 @@
-# PRD — Rekap Cadangan Lokomotif KAI
+# PRD — Rolling Stock Operation (Rekap Cadangan KAI)
 
 ## Ringkasan
 Aplikasi mobile (Expo React Native) untuk merekap data cadangan lokomotif, kereta, dan gerbong pada dua status operasional (TSO & TSGO), dipisahkan per akun regional Pusdal. Hasil rekap ditampilkan sebagai tabel plain-text yang dapat langsung disalin.

@@ -5,12 +5,18 @@ export const colors = {
   onSurfaceSecondary: "#18181B",
   surfaceTertiary: "#E4E4E7",
   onSurfaceTertiary: "#27272A",
-  surfaceInverse: "#18181B",
+  surfaceInverse: "#0B2E5C", // KAI deep blue
   onSurfaceInverse: "#FFFFFF",
-  brand: "#EA580C",
+  brand: "#EA580C", // KAI orange
   brandSecondary: "#F97316",
   brandTertiary: "#FFEDD5",
   onBrandTertiary: "#9A3412",
+  // KAI blue accent family
+  kaiBlue: "#0B4CA3",
+  kaiBlueDark: "#0B2E5C",
+  kaiBlueSoft: "#DBEAFE",
+  onKaiBlue: "#FFFFFF",
+  onKaiBlueSoft: "#0B2E5C",
   success: "#16A34A",
   warning: "#EAB308",
   error: "#DC2626",

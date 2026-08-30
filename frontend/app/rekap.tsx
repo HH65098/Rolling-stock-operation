@@ -8,9 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
@@ -97,7 +99,7 @@ function isValidDate(s: string): boolean {
 export default function RekapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [user, setUser] = useState<User | null>(null);
+  const [, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [groups, setGroups] = useState<RekapGroup[]>([]);
@@ -205,28 +207,41 @@ export default function RekapScreen() {
   };
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Pressable
-          testID="rekap-back-button"
-          onPress={() => router.back()}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>OUTPUT</Text>
-          <Text style={styles.headerTitle}>REKAP TEXT</Text>
+    <View style={[styles.wrap]}>
+      <LinearGradient
+        colors={[colors.kaiBlueDark, colors.kaiBlue]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + spacing.sm }]}
+      >
+        <View style={styles.headerRow}>
+          <Pressable
+            testID="rekap-back-button"
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="chevron-back" size={20} color="#FFF" />
+          </Pressable>
+          <Image
+            source={require("../assets/images/kai-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerLabel}>OUTPUT</Text>
+            <Text style={styles.headerTitle}>REKAP TEXT</Text>
+          </View>
+          <Pressable
+            testID="rekap-refresh-button"
+            onPress={() => load(appliedStart, appliedEnd)}
+            style={styles.backBtn}
+            hitSlop={8}
+          >
+            <Ionicons name="refresh" size={18} color="#FFF" />
+          </Pressable>
         </View>
-        <Pressable
-          testID="rekap-refresh-button"
-          onPress={() => load(appliedStart, appliedEnd)}
-          style={styles.backBtn}
-          hitSlop={8}
-        >
-          <Ionicons name="refresh" size={20} color={colors.onSurface} />
-        </Pressable>
-      </View>
+        <View style={styles.orangeStripe} />
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
@@ -353,23 +368,26 @@ export default function RekapScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: colors.surface },
+  wrap: { flex: 1, backgroundColor: colors.surfaceSecondary },
   header: {
+    paddingHorizontal: spacing.md,
+  },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderStrong,
+    paddingBottom: spacing.md,
   },
   backBtn: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: spacing.sm,
+    borderColor: "rgba(255,255,255,0.4)",
+    padding: spacing.xs,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
-  headerLabel: { fontSize: 10, letterSpacing: 1.5, color: colors.muted, fontFamily: mono },
-  headerTitle: { fontSize: 18, fontWeight: "800", color: colors.onSurface, letterSpacing: 1 },
+  logo: { width: 40, height: 20 },
+  headerLabel: { fontSize: 9, letterSpacing: 2, color: "#BFDBFE", fontFamily: mono, fontWeight: "800" },
+  headerTitle: { fontSize: 17, fontWeight: "900", color: "#FFF", letterSpacing: 0.5 },
+  orangeStripe: { height: 2, backgroundColor: colors.brand },
   filterCard: {
     borderWidth: 1,
     borderColor: colors.borderStrong,

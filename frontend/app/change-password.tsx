@@ -9,9 +9,11 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing } from "@/src/lib/theme";
 import { api } from "@/src/lib/api";
@@ -60,21 +62,34 @@ export default function ChangePasswordScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={[styles.wrap, { paddingTop: insets.top }]}
+      style={styles.wrap}
     >
-      <View style={styles.header}>
-        <Pressable
-          testID="change-password-back"
-          onPress={() => router.back()}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.onSurface} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>AKUN</Text>
-          <Text style={styles.headerTitle}>GANTI PASSWORD</Text>
+      <LinearGradient
+        colors={[colors.kaiBlueDark, colors.kaiBlue]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + spacing.sm }]}
+      >
+        <View style={styles.headerRow}>
+          <Pressable
+            testID="change-password-back"
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Ionicons name="chevron-back" size={20} color="#FFF" />
+          </Pressable>
+          <Image
+            source={require("../assets/images/kai-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerLabel}>AKUN</Text>
+            <Text style={styles.headerTitle}>GANTI PASSWORD</Text>
+          </View>
         </View>
-      </View>
+        <View style={styles.orangeStripe} />
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
@@ -150,23 +165,24 @@ export default function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: colors.surface },
-  header: {
+  wrap: { flex: 1, backgroundColor: colors.surfaceSecondary },
+  header: { paddingHorizontal: spacing.md },
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderStrong,
+    paddingBottom: spacing.md,
   },
   backBtn: {
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: spacing.sm,
+    borderColor: "rgba(255,255,255,0.4)",
+    padding: spacing.xs,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
-  headerLabel: { fontSize: 10, letterSpacing: 1.5, color: colors.muted, fontFamily: mono },
-  headerTitle: { fontSize: 18, fontWeight: "800", color: colors.onSurface, letterSpacing: 1 },
+  logo: { width: 40, height: 20 },
+  headerLabel: { fontSize: 9, letterSpacing: 2, color: "#BFDBFE", fontFamily: mono, fontWeight: "800" },
+  headerTitle: { fontSize: 17, fontWeight: "900", color: "#FFF", letterSpacing: 0.5 },
+  orangeStripe: { height: 2, backgroundColor: colors.brand },
   card: {
     borderWidth: 1,
     borderColor: colors.borderStrong,

@@ -1,0 +1,40 @@
+{
+  "summary": "Frontend-only regression + UI refresh testing for Rolling Stock Operation (Rekap Cadangan KAI) iteration 3. All new UI features verified on 390x844 mobile viewport: (1) Login screen renders KAI logo (testID kai-logo), 'ROLLING STOCK OPERATION' title, RSO orange badge, blue gradient hero and orange underline — login as Pusdal1/pusdal123 succeeds. (2) Dashboard shows KAI logo top-left, username 'Pusdal1', 9 category cards with alternating orange/blue top-border accents. Non-admin sees only change-password link + user-note; admin sees rekap sticky CTA + activity link + change-password link + admin-note. (3) Category screen (Cadangan Lokomotif) renders search bar (entry-search-input) with clear button (entry-search-clear) — typing 'ALPHA' correctly filters to '1 dari 3 data cocok', typing 'ZZZZ_NOMATCH' shows 'TIDAK ADA HASIL PENCARIAN' empty state, clear button resets input to full list. CRUD entry create/delete still works. (4) Rekap, Activity, and Change-Password screens all show blue gradient header with KAI logo (small monogram) + orange stripe. Rekap admin flow (filter inputs, RESET/TERAPKAN, UNDUH/SALIN) still functional. Activity shows AKTIF (2) + BELUM AKTIF (10) lists. No React Native red screens, no console errors. No deprecated packages detected. Previously reported sticky CTA overlap issue (iteration 2) still exists but is mitigable via scroll — not a blocker.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "dashboard.tsx (admin sticky CTA)",
+        "issue": "Carry-over from iteration 2 — sticky bottom 'REKAP TEXT' CTA still overlaps the AKTIVITAS HARI INI / GANTI PASSWORD link rows on 390x844 admin view until the user scrolls. paddingBottom for admin is `insets.bottom + spacing.xxl + 100` (dashboard.tsx line ~139); the two link rows plus admin-note total ~180px so they still land under the sticky bar at first paint. Reference: /app/frontend/app/dashboard.tsx:139",
+        "testID": "dashboard-activity-link, dashboard-change-password-link",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/backend/tests/test_rekap_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional carry-over) Bump admin paddingBottom on Dashboard ScrollView from ~100 to ~180, or reorder the AKTIVITAS/GANTI PASSWORD links above the category grid, so they are fully tappable without scrolling on 390x844.",
+    "(Nit) category/[key].tsx contains a `highlightMatch(text, q)` helper (line 347-350) that is a no-op returning the input string unchanged. Either implement Text-based highlighting or remove the helper and its call site for clarity."
+  ],
+  "critical_code_review_comments": [
+    "Search filter in category/[key].tsx uses useMemo over items — good, O(n) per keystroke. Matches on lowercased nomor OR keterangan. Correct.",
+    "kai-logo.png is bundled at /app/frontend/assets/images/kai-logo.png and referenced via relative require paths on all screens (login, dashboard, category, rekap, activity, change-password). Verified logo renders on login and dashboard via testID; category/rekap/activity/change-password screens embed the same asset without testID (only login+dashboard expose testID='kai-logo', which matches the spec).",
+    "All new UI keeps text wrapped in <Text>, uses StyleSheet, TouchableOpacity/Pressable — no React Native anti-patterns detected.",
+    "No deprecated Expo packages seen (no expo-av, expo-barcode-scanner, expo-background-fetch).",
+    "expo-file-system/legacy import for rekap .txt download remains (iteration 2 note); still functional."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested this iteration (frontend-only request)", "frontend": "100% functional; 1 carry-over MEDIUM UX overlap"},
+  "seed_data_creation": "Created 2 test entries in cadangan_lokomotif category (TEST_ALPHA_01, TEST_BETA_02) to exercise search filter, then deleted via UI. Some pre-existing TEST_* entries from prior iterations remain in DB — search still filters them correctly as expected per request note.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 3 verified: kai-logo testID exposed on login + dashboard, ROLLING STOCK OPERATION branding on login hero, category search bar (entry-search-input / entry-search-clear / entry-search-info / entries-empty 'TIDAK ADA HASIL PENCARIAN'), 9-card alternating orange/blue grid, admin sticky rekap CTA, and blue+orange headers on rekap/activity/change-password. All prior testIDs (login-*, dashboard-*, entry-*, cp-*, rekap-*, activity-*) remain stable. Known open issue: dashboard admin sticky CTA overlaps two link rows on 390x844 until user scrolls — use scroll_into_view_if_needed() before clicking dashboard-activity-link / dashboard-change-password-link.",
+  "rca_of_issue": "No new regressions this iteration. Carry-over dashboard sticky overlap RCA already documented in iteration_2.json."
+}

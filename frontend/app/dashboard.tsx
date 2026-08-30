@@ -7,30 +7,35 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing } from "@/src/lib/theme";
 import { authStorage, User } from "@/src/lib/auth";
+
+const mono = Platform.select({ ios: "Courier", android: "monospace" });
 
 type Cat = {
   key: string;
   label: string;
   short: string;
   icon: keyof typeof Ionicons.glyphMap;
+  accent: "orange" | "blue";
 };
 
 const CATEGORIES: Cat[] = [
-  { key: "cadangan_lokomotif", label: "Cadangan Lokomotif", short: "CAD LOK", icon: "train" },
-  { key: "tso_lokomotif", label: "TSO Lokomotif", short: "TSO LOK", icon: "train" },
-  { key: "tsgo_lokomotif", label: "TSGO Lokomotif", short: "TSGO LOK", icon: "train" },
-  { key: "cadangan_kereta", label: "Cadangan Kereta", short: "CAD KRT", icon: "subway" },
-  { key: "tso_kereta", label: "TSO Kereta", short: "TSO KRT", icon: "subway" },
-  { key: "tsgo_kereta", label: "TSGO Kereta", short: "TSGO KRT", icon: "subway" },
-  { key: "cadangan_gerbong", label: "Cadangan Gerbong", short: "CAD GBG", icon: "cube" },
-  { key: "tso_gerbong", label: "TSO Gerbong", short: "TSO GBG", icon: "cube" },
-  { key: "tsgo_gerbong", label: "TSGO Gerbong", short: "TSGO GBG", icon: "cube" },
+  { key: "cadangan_lokomotif", label: "Cadangan Lokomotif", short: "CAD LOK", icon: "train", accent: "orange" },
+  { key: "tso_lokomotif", label: "TSO Lokomotif", short: "TSO LOK", icon: "train", accent: "blue" },
+  { key: "tsgo_lokomotif", label: "TSGO Lokomotif", short: "TSGO LOK", icon: "train", accent: "orange" },
+  { key: "cadangan_kereta", label: "Cadangan Kereta", short: "CAD KRT", icon: "subway", accent: "blue" },
+  { key: "tso_kereta", label: "TSO Kereta", short: "TSO KRT", icon: "subway", accent: "orange" },
+  { key: "tsgo_kereta", label: "TSGO Kereta", short: "TSGO KRT", icon: "subway", accent: "blue" },
+  { key: "cadangan_gerbong", label: "Cadangan Gerbong", short: "CAD GBG", icon: "cube", accent: "orange" },
+  { key: "tso_gerbong", label: "TSO Gerbong", short: "TSO GBG", icon: "cube", accent: "blue" },
+  { key: "tsgo_gerbong", label: "TSGO Gerbong", short: "TSGO GBG", icon: "cube", accent: "orange" },
 ];
 
 export default function Dashboard() {
@@ -74,76 +79,126 @@ export default function Dashboard() {
   }
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top }]}>
-      {/* Sticky header */}
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>PUSDAL</Text>
-          <Text style={styles.headerTitle} testID="dashboard-username">
-            {user.username}
-          </Text>
-          <Text style={styles.headerRegion}>{user.region}</Text>
+    <View style={styles.wrap}>
+      {/* Hero Header */}
+      <LinearGradient
+        colors={[colors.kaiBlueDark, colors.kaiBlue]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.hero, { paddingTop: insets.top + spacing.sm }]}
+      >
+        <View style={styles.heroTop}>
+          <View style={styles.heroLeft}>
+            <Image
+              source={require("../assets/images/kai-logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+              testID="kai-logo"
+            />
+            <View style={styles.appNameBox}>
+              <Text style={styles.appNameSmall}>ROLLING STOCK</Text>
+              <Text style={styles.appNameSmall}>OPERATION</Text>
+            </View>
+          </View>
+          <Pressable
+            testID="dashboard-logout-button"
+            onPress={handleLogout}
+            style={styles.logoutBtn}
+            hitSlop={8}
+          >
+            <Ionicons name="log-out-outline" size={16} color="#FFF" />
+            <Text style={styles.logoutText}>KELUAR</Text>
+          </Pressable>
         </View>
-        <Pressable
-          testID="dashboard-logout-button"
-          onPress={handleLogout}
-          style={styles.logoutBtn}
-        >
-          <Ionicons name="log-out-outline" size={18} color={colors.onSurface} />
-          <Text style={styles.logoutText}>KELUAR</Text>
-        </Pressable>
-      </View>
+
+        <View style={styles.orangeStripe} />
+
+        <View style={styles.userRow}>
+          <View style={styles.userIcon}>
+            <Ionicons
+              name={user.role === "admin" ? "shield-checkmark" : "business"}
+              size={18}
+              color="#FFF"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.userLabel}>
+              {user.role === "admin" ? "ADMINISTRATOR" : "PUSDAL"}
+            </Text>
+            <Text style={styles.userName} testID="dashboard-username">
+              {user.username}
+            </Text>
+            <Text style={styles.userRegion}>{user.region}</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl + (user.role === "admin" ? 180 : spacing.lg),
+          paddingBottom: insets.bottom + spacing.xxl + (user.role === "admin" ? 200 : spacing.lg),
           gap: spacing.md,
         }}
       >
-        <Text style={styles.sectionTitle}>KATEGORI DATA</Text>
-        <Text style={styles.sectionSub}>
-          Pilih kategori untuk menambah / mengubah data cadangan.
-        </Text>
-
-        <View style={styles.grid}>
-          {CATEGORIES.map((c, idx) => (
-            <Pressable
-              key={c.key}
-              testID={`dashboard-category-${c.key}`}
-              onPress={() => router.push(`/category/${c.key}`)}
-              style={({ pressed }) => [
-                styles.gridItem,
-                pressed && { backgroundColor: colors.surfaceSecondary },
-              ]}
-            >
-              <View style={styles.gridIconRow}>
-                <View style={styles.gridIndex}>
-                  <Text style={styles.gridIndexText}>{String(idx + 1).padStart(2, "0")}</Text>
-                </View>
-                <Ionicons name={c.icon} size={22} color={colors.onSurface} />
-              </View>
-              <Text style={styles.gridShort}>{c.short}</Text>
-              <Text style={styles.gridLabel}>{c.label}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.sectionHead}>
+          <View style={styles.sectionBar} />
+          <View>
+            <Text style={styles.sectionTitle}>KATEGORI DATA</Text>
+            <Text style={styles.sectionSub}>Pilih kategori untuk kelola cadangan</Text>
+          </View>
         </View>
 
+        <View style={styles.grid}>
+          {CATEGORIES.map((c, idx) => {
+            const isOrange = c.accent === "orange";
+            const accentColor = isOrange ? colors.brand : colors.kaiBlue;
+            const softBg = isOrange ? colors.brandTertiary : colors.kaiBlueSoft;
+            const onSoft = isOrange ? colors.onBrandTertiary : colors.onKaiBlueSoft;
+            return (
+              <Pressable
+                key={c.key}
+                testID={`dashboard-category-${c.key}`}
+                onPress={() => router.push(`/category/${c.key}`)}
+                style={({ pressed }) => [
+                  styles.gridItem,
+                  { borderTopColor: accentColor },
+                  pressed && { backgroundColor: colors.surfaceSecondary },
+                ]}
+              >
+                <View style={styles.gridTop}>
+                  <View style={[styles.gridIndex, { backgroundColor: accentColor }]}>
+                    <Text style={styles.gridIndexText}>{String(idx + 1).padStart(2, "0")}</Text>
+                  </View>
+                  <View style={[styles.gridIconBox, { backgroundColor: softBg }]}>
+                    <Ionicons name={c.icon} size={18} color={onSoft} />
+                  </View>
+                </View>
+                <Text style={[styles.gridShort, { color: accentColor }]}>{c.short}</Text>
+                <Text style={styles.gridLabel}>{c.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Quick links */}
         {user.role === "admin" && (
           <Pressable
             testID="dashboard-activity-link"
             onPress={() => router.push("/activity")}
             style={({ pressed }) => [
               styles.linkRow,
-              pressed && { backgroundColor: colors.surfaceSecondary },
+              { borderLeftColor: colors.kaiBlue },
+              pressed && { backgroundColor: colors.kaiBlueSoft },
             ]}
           >
-            <Ionicons name="pulse" size={18} color={colors.brand} />
+            <View style={[styles.linkIcon, { backgroundColor: colors.kaiBlueSoft }]}>
+              <Ionicons name="pulse" size={18} color={colors.kaiBlue} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.linkTitle}>AKTIVITAS HARI INI</Text>
               <Text style={styles.linkSub}>Pusdal yang mengisi data hari ini</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
+            <Ionicons name="chevron-forward" size={18} color={colors.kaiBlue} />
           </Pressable>
         )}
 
@@ -152,28 +207,33 @@ export default function Dashboard() {
           onPress={() => router.push("/change-password")}
           style={({ pressed }) => [
             styles.linkRow,
-            pressed && { backgroundColor: colors.surfaceSecondary },
+            { borderLeftColor: colors.brand },
+            pressed && { backgroundColor: colors.brandTertiary },
           ]}
         >
-          <Ionicons name="key" size={18} color={colors.brand} />
+          <View style={[styles.linkIcon, { backgroundColor: colors.brandTertiary }]}>
+            <Ionicons name="key" size={18} color={colors.brand} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.linkTitle}>GANTI PASSWORD</Text>
             <Text style={styles.linkSub}>Ubah password akun {user.username}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
+          <Ionicons name="chevron-forward" size={18} color={colors.brand} />
         </Pressable>
 
         {user.role === "admin" && (
           <View style={styles.adminNote} testID="admin-note">
+            <Ionicons name="shield-checkmark" size={14} color={colors.onBrandTertiary} />
             <Text style={styles.adminNoteText}>
-              MODE ADMIN · Anda dapat melihat data seluruh Pusdal pada rekap.
+              MODE ADMIN · Anda dapat melihat rekap seluruh Pusdal.
             </Text>
           </View>
         )}
         {user.role !== "admin" && (
           <View style={styles.userNote} testID="user-note">
+            <Ionicons name="information-circle" size={14} color={colors.kaiBlue} />
             <Text style={styles.userNoteText}>
-              Hasil rekap seluruh Pusdal hanya dapat diakses oleh Administrator.
+              Hasil rekap seluruh Pusdal hanya diakses Administrator.
             </Text>
           </View>
         )}
@@ -195,8 +255,16 @@ export default function Dashboard() {
               pressed && { opacity: 0.9 },
             ]}
           >
-            <Ionicons name="document-text-outline" size={20} color="#FFF" />
-            <Text style={styles.rekapText}>REKAP TEXT</Text>
+            <LinearGradient
+              colors={[colors.brand, colors.brandSecondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.rekapBtnInner}
+            >
+              <Ionicons name="document-text" size={20} color="#FFF" />
+              <Text style={styles.rekapText}>REKAP TEXT</Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFF" />
+            </LinearGradient>
           </Pressable>
         </View>
       )}
@@ -205,68 +273,118 @@ export default function Dashboard() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: colors.surface },
+  wrap: { flex: 1, backgroundColor: colors.surfaceSecondary },
   loadingWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surface,
   },
-  header: {
+  hero: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  heroTop: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderStrong,
-    backgroundColor: colors.surface,
+    justifyContent: "space-between",
   },
-  headerLabel: {
+  heroLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  logo: { width: 72, height: 30 },
+  appNameBox: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.brand,
+    paddingLeft: spacing.sm,
+  },
+  appNameSmall: {
+    color: "#FFF",
     fontSize: 10,
+    fontWeight: "900",
     letterSpacing: 1.5,
-    color: colors.muted,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.onSurface,
-    letterSpacing: 0.5,
-  },
-  headerRegion: {
-    fontSize: 12,
-    color: colors.brand,
-    fontWeight: "700",
-    marginTop: 2,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+    lineHeight: 12,
   },
   logoutBtn: {
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   logoutText: {
-    fontSize: 11,
-    fontWeight: "700",
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 1,
-    color: colors.onSurface,
+  },
+  orangeStripe: {
+    height: 2,
+    backgroundColor: colors.brand,
+    marginTop: spacing.md,
+  },
+  userRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  userIcon: {
+    width: 40,
+    height: 40,
+    backgroundColor: "rgba(234,88,12,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  userLabel: {
+    color: "#BFDBFE",
+    fontSize: 9,
+    letterSpacing: 2,
+    fontFamily: mono,
+    fontWeight: "800",
+  },
+  userName: {
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  userRegion: {
+    color: colors.brand,
+    fontSize: 11,
+    fontWeight: "800",
+    marginTop: 2,
+    letterSpacing: 1,
+    fontFamily: mono,
+  },
+  sectionHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  sectionBar: {
+    width: 4,
+    height: 28,
+    backgroundColor: colors.brand,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: 1.5,
     color: colors.onSurface,
-    fontWeight: "800",
-    marginTop: spacing.sm,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+    fontWeight: "900",
+    fontFamily: mono,
   },
   sectionSub: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.muted,
-    marginBottom: spacing.sm,
+    marginTop: 2,
   },
   grid: {
     flexDirection: "row",
@@ -276,93 +394,112 @@ const styles = StyleSheet.create({
   gridItem: {
     width: "48%",
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
+    borderTopWidth: 3,
     padding: spacing.md,
     backgroundColor: colors.surface,
-    minHeight: 120,
+    minHeight: 130,
     justifyContent: "space-between",
   },
-  gridIconRow: {
+  gridTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   gridIndex: {
-    backgroundColor: colors.onSurface,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
   gridIndexText: {
     color: "#FFF",
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 1,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+    fontFamily: mono,
+  },
+  gridIconBox: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
   gridShort: {
     fontSize: 11,
-    color: colors.brand,
     letterSpacing: 1.5,
-    fontWeight: "800",
+    fontWeight: "900",
     marginTop: spacing.md,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+    fontFamily: mono,
   },
   gridLabel: {
-    fontSize: 15,
+    fontSize: 14,
     color: colors.onSurface,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 2,
-  },
-  adminNote: {
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.brand,
-    backgroundColor: colors.brandTertiary,
-    padding: spacing.md,
-  },
-  adminNoteText: {
-    color: colors.onBrandTertiary,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
-  },
-  userNote: {
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceSecondary,
-    padding: spacing.md,
-  },
-  userNoteText: {
-    color: colors.onSurface,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
   },
   linkRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
+  },
+  linkIcon: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   linkTitle: {
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 1.5,
     color: colors.onSurface,
-    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+    fontFamily: mono,
   },
   linkSub: {
     fontSize: 11,
     color: colors.muted,
     marginTop: 2,
+  },
+  adminNote: {
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.brand,
+    backgroundColor: colors.brandTertiary,
+    padding: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  adminNoteText: {
+    color: colors.onBrandTertiary,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    flex: 1,
+    fontFamily: mono,
+  },
+  userNote: {
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.kaiBlue,
+    backgroundColor: colors.kaiBlueSoft,
+    padding: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  userNoteText: {
+    color: colors.kaiBlueDark,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    flex: 1,
+    fontFamily: mono,
   },
   rekapCta: {
     position: "absolute",
@@ -373,22 +510,22 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.borderStrong,
+    borderTopColor: colors.border,
   },
-  rekapBtn: {
-    backgroundColor: colors.onSurface,
-    paddingVertical: spacing.lg,
+  rekapBtn: { overflow: "hidden" },
+  rekapBtnInner: {
+    paddingVertical: spacing.md,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
   },
   rekapText: {
     color: "#FFF",
-    fontWeight: "800",
-    letterSpacing: 1.5,
+    fontWeight: "900",
+    letterSpacing: 2,
     fontSize: 14,
+    flex: 1,
+    textAlign: "center",
   },
 });
