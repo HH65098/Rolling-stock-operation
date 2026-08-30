@@ -1,0 +1,139 @@
+{
+  "app_name": "Rekap Lokomotif KAI",
+  "personality": "5 Brutalist Mobile",
+  "personality_one_liner": "A stark, command-center utility app focused on operational clarity, high information density, and mechanical directness.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#09090B",
+    "surfaceSecondary": "#F4F4F5",
+    "onSurfaceSecondary": "#18181B",
+    "surfaceTertiary": "#E4E4E7",
+    "onSurfaceTertiary": "#27272A",
+    "surfaceInverse": "#18181B",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#EA580C",
+    "brandPrimary": "#EA580C",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#F97316",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#FFEDD5",
+    "onBrandTertiary": "#9A3412",
+    "success": "#16A34A",
+    "onSuccess": "#FFFFFF",
+    "warning": "#EAB308",
+    "onWarning": "#FFFFFF",
+    "error": "#DC2626",
+    "onError": "#FFFFFF",
+    "info": "#52525B",
+    "onInfo": "#FFFFFF",
+    "border": "#E4E4E7",
+    "borderStrong": "#09090B",
+    "divider": "#E4E4E7"
+  },
+  "typography": {
+    "displayFontFamily": "Space Grotesk",
+    "textFontFamily": "JetBrains Mono",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Utility-first: strong hierarchy, structural alignment, dense but highly readable spacing with distinct 1pt borders to separate operational modules.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 0,
+    "md": 0,
+    "lg": 0,
+    "pill": 0
+  },
+  "shadow_tier": "0",
+  "navigation": "stack_only",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": false,
+    "do's": [],
+    "dont's": [
+      "No blur, no glassmorphism. This is a brutalist utility app. Rely on stark contrast and solid borders."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "solid surfaceSecondary",
+      "android": "solid surfaceSecondary",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Login",
+      "purpose": "Secure entry point restricted to regional preset accounts (Pusdal).",
+      "states": {
+        "loading": "Centered loading text with mono font.",
+        "empty": "N/A",
+        "error": "Stark red error message above the input block."
+      },
+      "layout": "Centered structural box containing a dropdown for the preset 'Pusdal' accounts and password field. Hard bottom CTA button. Mono fonts for labels, sharp 1pt borders on inputs."
+    },
+    {
+      "name": "Dashboard",
+      "purpose": "Command center listing the 6 primary data categories.",
+      "states": {
+        "loading": "Skeleton grid with visible borders.",
+        "empty": "N/A",
+        "error": "Error block with retry button."
+      },
+      "layout": "Grid of 6 stark, squared cards (TSO Lokomotif, TSO Kereta, TSO Gerbong, TSGO Lokomotif, TSGO Kereta, TSGO Gerbong) wrapped in 1pt borders. Each block clearly isolated. A prominent 'Rekap Text' action pinned at the bottom."
+    },
+    {
+      "name": "List/Form",
+      "purpose": "Add and view items (Nomor + Keterangan) for a specific category.",
+      "states": {
+        "loading": "Mono text loading indicator.",
+        "empty": "Empty state text with 1pt bordered container indicating 'No Data'.",
+        "error": "Error text in mono font with strong outline."
+      },
+      "layout": "Single column. Top section has inputs for 'Nomor' and 'Keterangan'. Underneath, a strict list of entries displaying data in mono-type. Pinned 'Submit' button at bottom with safe-area clearance."
+    },
+    {
+      "name": "Rekap (Report)",
+      "purpose": "Display final structured text summary of all data for easy copying.",
+      "states": {
+        "loading": "Skeleton text blocks.",
+        "empty": "No data available to recap.",
+        "error": "Error loading recap data."
+      },
+      "layout": "Full-width text area displaying raw data in a tabular plain-text format using JetBrains Mono for exact alignment. A massive, edge-to-edge 'Copy to Clipboard' sticky button at the bottom."
+    }
+  ],
+  "images": {
+    "hero_train": {
+      "url": "https://images.unsplash.com/photo-1589196728426-4613a4992c42?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwxfHx0cmFpbiUyMGxvY29tb3RpdmV8ZW58MHx8fHwxNzg4MTI3MTI0fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "red and white train on rail near body of water during daytime"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the Brutalist Mobile personality (Personality 5). No rounded corners (radius 0 everywhere), no shadows, no glassmorphism.",
+    "Use strong 1pt borders (`borderStrong` #09090B) to organize layout blocks. The app must look like a mechanical dashboard.",
+    "The primary brand color is KAI Orange (#EA580C) representing the signal color. Keep the rest of the UI stark white/grey (monochrome).",
+    "For typography, headings use Space Grotesk, but all data, metadata, forms, and the recap text MUST use JetBrains Mono to emulate a high-density utility terminal.",
+    "Maintain the Indonesian language ('Pusdal', 'Nomor', 'Keterangan', 'Rekap') throughout the UI.",
+    "Ensure the final 'Rekap' output is structured in a literal plain text block so the user can easily copy and paste it as requested in the problem statement.",
+    "Place primary action buttons in the thumb zone (sticky at the bottom)."
+  ]
+}
