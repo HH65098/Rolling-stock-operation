@@ -17,11 +17,14 @@ import { colors, spacing } from "@/src/lib/theme";
 import { api, Entry } from "@/src/lib/api";
 
 const LABELS: Record<string, string> = {
+  cadangan_lokomotif: "Cadangan Lokomotif",
   tso_lokomotif: "TSO Lokomotif",
-  tso_kereta: "TSO Kereta",
-  tso_gerbong: "TSO Gerbong",
   tsgo_lokomotif: "TSGO Lokomotif",
+  cadangan_kereta: "Cadangan Kereta",
+  tso_kereta: "TSO Kereta",
   tsgo_kereta: "TSGO Kereta",
+  cadangan_gerbong: "Cadangan Gerbong",
+  tso_gerbong: "TSO Gerbong",
   tsgo_gerbong: "TSGO Gerbong",
 };
 

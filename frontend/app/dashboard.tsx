@@ -22,11 +22,14 @@ type Cat = {
 };
 
 const CATEGORIES: Cat[] = [
+  { key: "cadangan_lokomotif", label: "Cadangan Lokomotif", short: "CAD LOK", icon: "train" },
   { key: "tso_lokomotif", label: "TSO Lokomotif", short: "TSO LOK", icon: "train" },
-  { key: "tso_kereta", label: "TSO Kereta", short: "TSO KRT", icon: "subway" },
-  { key: "tso_gerbong", label: "TSO Gerbong", short: "TSO GBG", icon: "cube" },
   { key: "tsgo_lokomotif", label: "TSGO Lokomotif", short: "TSGO LOK", icon: "train" },
+  { key: "cadangan_kereta", label: "Cadangan Kereta", short: "CAD KRT", icon: "subway" },
+  { key: "tso_kereta", label: "TSO Kereta", short: "TSO KRT", icon: "subway" },
   { key: "tsgo_kereta", label: "TSGO Kereta", short: "TSGO KRT", icon: "subway" },
+  { key: "cadangan_gerbong", label: "Cadangan Gerbong", short: "CAD GBG", icon: "cube" },
+  { key: "tso_gerbong", label: "TSO Gerbong", short: "TSO GBG", icon: "cube" },
   { key: "tsgo_gerbong", label: "TSGO Gerbong", short: "TSGO GBG", icon: "cube" },
 ];
 
@@ -94,7 +97,7 @@ export default function Dashboard() {
       <ScrollView
         contentContainerStyle={{
           padding: spacing.lg,
-          paddingBottom: insets.bottom + spacing.xxl + 80,
+          paddingBottom: insets.bottom + spacing.xxl + (user.role === "admin" ? 80 : spacing.lg),
           gap: spacing.md,
         }}
       >
@@ -133,27 +136,36 @@ export default function Dashboard() {
             </Text>
           </View>
         )}
+        {user.role !== "admin" && (
+          <View style={styles.userNote} testID="user-note">
+            <Text style={styles.userNoteText}>
+              Hasil rekap seluruh Pusdal hanya dapat diakses oleh Administrator.
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Sticky Rekap CTA */}
-      <View
-        style={[
-          styles.rekapCta,
-          { paddingBottom: Math.max(insets.bottom, spacing.md) },
-        ]}
-      >
-        <Pressable
-          testID="dashboard-rekap-button"
-          onPress={() => router.push("/rekap")}
-          style={({ pressed }) => [
-            styles.rekapBtn,
-            pressed && { opacity: 0.9 },
+      {/* Sticky Rekap CTA — admin only */}
+      {user.role === "admin" && (
+        <View
+          style={[
+            styles.rekapCta,
+            { paddingBottom: Math.max(insets.bottom, spacing.md) },
           ]}
         >
-          <Ionicons name="document-text-outline" size={20} color="#FFF" />
-          <Text style={styles.rekapText}>REKAP TEXT</Text>
-        </Pressable>
-      </View>
+          <Pressable
+            testID="dashboard-rekap-button"
+            onPress={() => router.push("/rekap")}
+            style={({ pressed }) => [
+              styles.rekapBtn,
+              pressed && { opacity: 0.9 },
+            ]}
+          >
+            <Ionicons name="document-text-outline" size={20} color="#FFF" />
+            <Text style={styles.rekapText}>REKAP TEXT</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -276,6 +288,20 @@ const styles = StyleSheet.create({
   },
   adminNoteText: {
     color: colors.onBrandTertiary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    fontFamily: Platform.select({ ios: "Courier", android: "monospace" }),
+  },
+  userNote: {
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceSecondary,
+    padding: spacing.md,
+  },
+  userNoteText: {
+    color: colors.onSurface,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.5,

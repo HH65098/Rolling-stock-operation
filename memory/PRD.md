@@ -5,17 +5,18 @@ Aplikasi mobile (Expo React Native) untuk merekap data cadangan lokomotif, keret
 
 ## Pengguna
 13 akun preset (di-seed idempotent saat startup backend).
-- **admin / admin123** — dapat melihat rekap semua Pusdal.
+- **admin / admin123** — satu-satunya akun yang dapat mengakses hasil rekap.
 - **Pusdal1 – Pusdal9** — Jakarta, Bandung, Cirebon, Semarang, Purwokerto, Yogyakarta, Madiun, Surabaya, Jember (password `pusdal123`).
 - **PusdalV1, PusdalV2, PusdalSS** — Medan, Padang, Sumatera Selatan (password `pusdal123`).
 
 ## Fitur Utama
 1. **Login JWT** – username & password → token disimpan di SecureStore (native) / AsyncStorage (web).
-2. **Dashboard** – 6 kartu kategori: TSO Lokomotif/Kereta/Gerbong, TSGO Lokomotif/Kereta/Gerbong.
+2. **Dashboard** – 9 kartu kategori dengan urutan tetap:
+   1. Cadangan Lokomotif · 2. TSO Lokomotif · 3. TSGO Lokomotif
+   4. Cadangan Kereta · 5. TSO Kereta · 6. TSGO Kereta
+   7. Cadangan Gerbong · 8. TSO Gerbong · 9. TSGO Gerbong
 3. **CRUD Data** – setiap entri terdiri dari `Nomor` + `Keterangan`. Data terikat pada akun pembuat (owner).
-4. **Rekap Text** – hasil `GET /api/rekap` dirender client-side menjadi tabel plain-text monospace:
-   - User biasa: hanya data miliknya.
-   - Admin: dikelompokkan per Pusdal (owner + region) dan per kategori, urut mengikuti SEED_USERS.
+4. **Rekap Text (Admin Only)** – `GET /api/rekap` mengembalikan 403 untuk non-admin. Admin mendapat data seluruh Pusdal dikelompokkan per owner+region dan per kategori.
 5. **Copy to Clipboard** – tombol SALIN TEXT menyalin seluruh output ke clipboard (`expo-clipboard`).
 
 ## Arsitektur Teknis

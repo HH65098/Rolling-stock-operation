@@ -46,11 +46,14 @@ SEED_USERS = [
 ]
 
 VALID_CATEGORIES = {
+    "cadangan_lokomotif": "Cadangan Lokomotif",
     "tso_lokomotif": "TSO Lokomotif",
-    "tso_kereta": "TSO Kereta",
-    "tso_gerbong": "TSO Gerbong",
     "tsgo_lokomotif": "TSGO Lokomotif",
+    "cadangan_kereta": "Cadangan Kereta",
+    "tso_kereta": "TSO Kereta",
     "tsgo_kereta": "TSGO Kereta",
+    "cadangan_gerbong": "Cadangan Gerbong",
+    "tso_gerbong": "TSO Gerbong",
     "tsgo_gerbong": "TSGO Gerbong",
 }
 
@@ -287,9 +290,10 @@ async def delete_entry(category: str, entry_id: str, user: dict = Depends(get_cu
 
 @api_router.get("/rekap")
 async def get_rekap(user: dict = Depends(get_current_user)):
-    """Return all entries grouped by owner/region and category for text rendering on client."""
-    query = {} if user["role"] == "admin" else {"owner": user["username"]}
-    docs = await db.entries.find(query, {"_id": 0}).sort([("owner", 1), ("category", 1), ("created_at", 1)]).to_list(100000)
+    """Return all entries grouped by owner/region and category. ADMIN ONLY."""
+    if user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Hanya administrator yang dapat mengakses rekap")
+    docs = await db.entries.find({}, {"_id": 0}).sort([("owner", 1), ("category", 1), ("created_at", 1)]).to_list(100000)
 
     # Group: region -> category -> [entries]
     grouped: dict = {}
@@ -307,10 +311,10 @@ async def get_rekap(user: dict = Depends(get_current_user)):
     result = []
     # Preserve seed order for admin view
     ordered_owners = [u[0] for u in SEED_USERS if u[1] == "user"]
-    if user["role"] == "admin":
-        keys_sorted = sorted(grouped.keys(), key=lambda k: ordered_owners.index(k.split("|")[0]) if k.split("|")[0] in ordered_owners else 999)
-    else:
-        keys_sorted = list(grouped.keys())
+    keys_sorted = sorted(
+        grouped.keys(),
+        key=lambda k: ordered_owners.index(k.split("|")[0]) if k.split("|")[0] in ordered_owners else 999,
+    )
 
     for key in keys_sorted:
         owner, region = key.split("|", 1)
