@@ -30,7 +30,7 @@ JWT_EXPIRE_MINUTES = int(os.environ.get('JWT_EXPIRE_MINUTES', '1440'))
 
 # Preset accounts: (username, role, region_label)
 SEED_USERS = [
-    ("admin", "admin", "Administrator"),
+    ("OPpusat", "admin", "Operasi Pusat"),
     ("Pusdal1", "user", "Jakarta"),
     ("Pusdal2", "user", "Bandung"),
     ("Pusdal3", "user", "Cirebon"),
@@ -170,6 +170,22 @@ def entry_to_view(doc: dict) -> dict:
 async def seed_users_startup():
     await db.users.create_index("username", unique=True)
     await db.entries.create_index([("owner", 1), ("category", 1)])
+
+    # Migration: legacy admin username was "admin"; rename to "OPpusat" if needed
+    legacy = await db.users.find_one({"username": "admin"})
+    if legacy:
+        exists = await db.users.find_one({"username": "OPpusat"})
+        if not exists:
+            await db.users.update_one(
+                {"_id": legacy["_id"]},
+                {"$set": {"username": "OPpusat", "region": "Operasi Pusat"}},
+            )
+            # also migrate any entries owned by the previous admin
+            await db.entries.update_many({"owner": "admin"}, {"$set": {"owner": "OPpusat"}})
+            logger.info("Migrated legacy admin → OPpusat")
+        else:
+            await db.users.delete_one({"_id": legacy["_id"]})
+            logger.info("Removed legacy admin (OPpusat already exists)")
 
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
     seed_password = os.environ.get("SEED_PASSWORD", "pusdal123")

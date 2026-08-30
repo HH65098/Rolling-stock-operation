@@ -22,7 +22,7 @@ import { Ionicons } from "@expo/vector-icons";
 const mono = Platform.select({ ios: "Courier", android: "monospace" });
 
 const HINTS = [
-  { u: "admin", label: "Administrator", pwd: "admin123" },
+  { u: "OPpusat", label: "OPpusat - Operasi Pusat", pwd: "admin123" },
   { u: "Pusdal1", label: "Pusdal1 - Jakarta", pwd: "pusdal123" },
   { u: "Pusdal2", label: "Pusdal2 - Bandung", pwd: "pusdal123" },
   { u: "Pusdal3", label: "Pusdal3 - Cirebon", pwd: "pusdal123" },
@@ -94,9 +94,6 @@ export default function Login() {
               resizeMode="contain"
               testID="kai-logo"
             />
-            <View style={styles.orangeBadge}>
-              <Text style={styles.orangeBadgeText}>RSO</Text>
-            </View>
           </View>
           <Text style={styles.heroTitle}>ROLLING STOCK</Text>
           <Text style={styles.heroTitle}>OPERATION</Text>
@@ -129,7 +126,7 @@ export default function Login() {
                 style={styles.input}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="Pusdal1"
+                placeholder="Pusdal1 / OPpusat"
                 placeholderTextColor={colors.muted}
               />
             </View>
