@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Pressable,
-  TextInput,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
@@ -17,6 +16,9 @@ import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, {
+  DateTimePickerAndroid,
+} from "@react-native-community/datetimepicker";
 import { colors, spacing } from "@/src/lib/theme";
 import { api, RekapGroup } from "@/src/lib/api";
 import { authStorage, User } from "@/src/lib/auth";
@@ -96,6 +98,33 @@ function isValidDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseDateStr(s: string): Date {
+  if (s && /^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return new Date(`${s}T00:00:00`);
+  }
+  return new Date();
+}
+
+function formatDateID(s: string): string {
+  if (!s) return "";
+  try {
+    return parseDateStr(s).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return s;
+  }
+}
+
 export default function RekapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -111,6 +140,7 @@ export default function RekapScreen() {
   const [endDate, setEndDate] = useState("");
   const [appliedStart, setAppliedStart] = useState<string | undefined>();
   const [appliedEnd, setAppliedEnd] = useState<string | undefined>();
+  const [iosPicker, setIosPicker] = useState<null | "start" | "end">(null);
 
   const load = useCallback(
     async (s?: string, e?: string) => {
@@ -153,6 +183,26 @@ export default function RekapScreen() {
     setAppliedStart(startDate || undefined);
     setAppliedEnd(endDate || undefined);
     load(startDate, endDate);
+  };
+
+  const openPicker = (which: "start" | "end") => {
+    const current = which === "start" ? startDate : endDate;
+    const set = which === "start" ? setStartDate : setEndDate;
+    if (Platform.OS === "android") {
+      DateTimePickerAndroid.open({
+        value: parseDateStr(current),
+        mode: "date",
+        is24Hour: true,
+        onChange: (event, date) => {
+          if (event.type === "set" && date) {
+            set(formatDate(date));
+          }
+        },
+      });
+    } else if (Platform.OS === "ios") {
+      setIosPicker(which);
+    }
+    // web handled inline via <input type="date">
   };
 
   const clearFilter = () => {
@@ -223,7 +273,7 @@ export default function RekapScreen() {
             <Ionicons name="chevron-back" size={20} color="#FFF" />
           </Pressable>
           <Image
-            source={require("../assets/images/kai-logo.png")}
+            source={require("../assets/images/kai-logo-white.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -256,30 +306,22 @@ export default function RekapScreen() {
           <View style={styles.filterRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.inputLabel}>DARI</Text>
-              <TextInput
+              <DateField
                 testID="rekap-start-input"
                 value={startDate}
-                onChangeText={setStartDate}
-                style={styles.input}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="numbers-and-punctuation"
+                onChange={setStartDate}
+                onPressNative={() => openPicker("start")}
+                placeholder="Pilih tanggal"
               />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.inputLabel}>SAMPAI</Text>
-              <TextInput
+              <DateField
                 testID="rekap-end-input"
                 value={endDate}
-                onChangeText={setEndDate}
-                style={styles.input}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="numbers-and-punctuation"
+                onChange={setEndDate}
+                onPressNative={() => openPicker("end")}
+                placeholder="Pilih tanggal"
               />
             </View>
           </View>
@@ -363,9 +405,120 @@ export default function RekapScreen() {
           <Text style={styles.ctaText}>{copied ? "TERSALIN" : "SALIN"}</Text>
         </Pressable>
       </View>
+
+      {/* iOS modal picker */}
+      {Platform.OS === "ios" && iosPicker && (
+        <View style={styles.iosOverlay} pointerEvents="box-none">
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setIosPicker(null)}
+          />
+          <View style={styles.iosSheet}>
+            <View style={styles.iosSheetHead}>
+              <Text style={styles.iosSheetTitle}>
+                {iosPicker === "start" ? "PILIH TANGGAL DARI" : "PILIH TANGGAL SAMPAI"}
+              </Text>
+              <Pressable
+                testID="rekap-ios-picker-done"
+                onPress={() => setIosPicker(null)}
+              >
+                <Text style={styles.iosSheetDone}>SELESAI</Text>
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={parseDateStr(
+                iosPicker === "start" ? startDate : endDate
+              )}
+              mode="date"
+              display="spinner"
+              onChange={(_evt, date) => {
+                if (date) {
+                  if (iosPicker === "start") setStartDate(formatDate(date));
+                  else setEndDate(formatDate(date));
+                }
+              }}
+            />
+          </View>
+        </View>
+      )}
     </View>
   );
 }
+
+// ---- DateField ----
+type DateFieldProps = {
+  testID: string;
+  value: string;
+  onChange: (v: string) => void;
+  onPressNative: () => void;
+  placeholder?: string;
+};
+
+function DateField({ testID, value, onChange, onPressNative, placeholder }: DateFieldProps) {
+  if (Platform.OS === "web") {
+    // Render a real HTML <input type="date"> so browsers show their native picker.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const React = require("react");
+    return React.createElement("input", {
+      type: "date",
+      value: value || "",
+      onChange: (e: any) => onChange(e.target.value),
+      "data-testid": testID,
+      style: {
+        border: `1px solid ${colors.border}`,
+        borderRadius: 0,
+        padding: "10px 12px",
+        fontSize: 13,
+        color: colors.onSurface,
+        fontFamily: mono,
+        marginTop: 4,
+        backgroundColor: colors.surfaceSecondary,
+        width: "100%",
+        outline: "none",
+        boxSizing: "border-box",
+      },
+    });
+  }
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPressNative}
+      style={dateFieldStyles.pressable}
+    >
+      <Ionicons name="calendar" size={14} color={colors.kaiBlue} />
+      <Text
+        style={[
+          dateFieldStyles.text,
+          !value && { color: colors.muted },
+        ]}
+      >
+        {value ? formatDateID(value) : placeholder || "Pilih tanggal"}
+      </Text>
+      <Ionicons name="chevron-down" size={14} color={colors.kaiBlue} />
+    </Pressable>
+  );
+}
+
+const dateFieldStyles = StyleSheet.create({
+  pressable: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSecondary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  text: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.onSurface,
+    fontFamily: mono,
+    fontWeight: "700",
+  },
+});
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.surfaceSecondary },
@@ -514,5 +667,39 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.2,
     fontSize: 13,
+  },
+  // iOS date picker sheet
+  iosOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(9,9,11,0.4)",
+    justifyContent: "flex-end",
+  },
+  iosSheet: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 3,
+    borderTopColor: colors.brand,
+    paddingBottom: spacing.lg,
+  },
+  iosSheetHead: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  iosSheetTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    color: colors.onSurface,
+    fontFamily: mono,
+  },
+  iosSheetDone: {
+    color: colors.brand,
+    fontWeight: "900",
+    fontSize: 13,
+    letterSpacing: 1.5,
   },
 });

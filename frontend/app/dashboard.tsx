@@ -90,7 +90,7 @@ export default function Dashboard() {
         <View style={styles.heroTop}>
           <View style={styles.heroLeft}>
             <Image
-              source={require("../assets/images/kai-logo.png")}
+              source={require("../assets/images/kai-logo-white.png")}
               style={styles.logo}
               resizeMode="contain"
               testID="kai-logo"

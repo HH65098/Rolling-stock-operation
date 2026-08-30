@@ -75,7 +75,7 @@ export default function ActivityScreen() {
             <Ionicons name="chevron-back" size={20} color="#FFF" />
           </Pressable>
           <Image
-            source={require("../assets/images/kai-logo.png")}
+            source={require("../assets/images/kai-logo-white.png")}
             style={styles.logo}
             resizeMode="contain"
           />

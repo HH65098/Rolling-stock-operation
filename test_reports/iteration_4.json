@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only iteration 4 verification for Rekap Cadangan KAI — native date pickers + white KAI logo. All acceptance criteria met on 390x844 mobile web viewport. (1) On /rekap the two date fields (data-testid='rekap-start-input' and 'rekap-end-input') render as raw HTML <input type='date'> with the data-testid attribute correctly forwarded — playwright fill() with ISO 'YYYY-MM-DD' works; the browser shows 'mm/dd/yyyy' + calendar icon (screenshot verified). (2) After TERAPKAN with start=2024-01-01 & end=2026-12-31, the 'Rentang Data : 2024-01-01 s/d 2026-12-31' line echoes exactly; after RESET the fields clear and 'Rentang Data : Semua tanggal' is shown. (3) The new white-K/I logo (kai-logo-white.png, 37.5KB) is bundled and visible against the blue gradient on both login (testID kai-logo, 96x40) and dashboard (testID kai-logo, 72x30); no HTTP 404s in console. (4) Regression: admin login OK, dashboard shows 9 category cards + sticky REKAP TEXT CTA, UNDUH .TXT downloads 'rekap-cadangan-2026-08-30T22-48-54.txt' via browser Blob path, Pusdal1 has NO rekap button and hitting /rekap directly yields the 403 error message 'Hanya administrator yang dapat mengakses rekap'. No React Native red-screen or console errors (only the intentional 403 for Pusdal1). No deprecated Expo packages introduced (still uses @react-native-community/datetimepicker, expo-linear-gradient, expo-file-system/legacy).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_3.json",
+    "/app/backend/tests/test_new_features.py",
+    "/app/backend/tests/test_rekap_api.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "rekap.tsx DateField uses require('react') inside the component to call React.createElement on web — works, but the ESLint disable comment implies a lint quirk; consider a top-level `import React from 'react'` + `React.createElement('input', ...)` for cleaner code. Not a bug.",
+    "openPicker() early-returns for iOS/Android but does not guard against Platform.OS === 'web' calling it — currently unreachable because DateField on web never triggers onPressNative, but a defensive `if (Platform.OS === 'web') return;` at top would be safer if the component is reused.",
+    "iOS modal spinner path (setIosPicker) not tested in web preview — needs a native iOS build to verify; code path visually matches the spec (modal sheet + Pilih tanggal DARI/SAMPAI + SELESAI button).",
+    "isValidDate('YYYY-MM-DD') check in applyFilter() is now practically redundant on web (browser <input type='date'> always emits ISO) but still useful for native paths — keep it.",
+    "The new kai-logo-white.png (37.5KB) coexists with the old kai-logo.png (41.7KB). Only the white variant is now referenced by all screens; the old asset appears unused after this iteration — main agent may remove it if not used elsewhere."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested this iteration (frontend-only request)", "frontend": "100% - all iteration 4 acceptance criteria pass; iteration 3 regressions all pass"},
+  "seed_data_creation": "No new seed data created. Existing TEST_* entries from prior iterations were used passively to verify the filter shows/hides content when a range is applied.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 4 verified: date fields on /rekap now render as native <input type='date'> on web (data-testid attributes preserved: rekap-start-input, rekap-end-input) — playwright can use page.fill(selector, 'YYYY-MM-DD') directly. On Android openPicker() uses DateTimePickerAndroid.open (imperative), on iOS a bottom-sheet modal <DateTimePicker mode='date' display='spinner'/> is rendered with testID rekap-ios-picker-done for the SELESAI button. kai-logo testID (previously mapped to kai-logo.png) now points at kai-logo-white.png — white monogram on blue gradient. All other testIDs from iteration 3 remain stable.",
+  "rca_of_issue": "No new bugs. Native date picker rendered inline with a runtime `require('react')` (RNW pattern) — valid but slightly unusual; noted in code review."
+}
