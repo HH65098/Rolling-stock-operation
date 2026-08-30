@@ -183,13 +183,12 @@ export default function CategoryScreen() {
             </Text>
           </View>
 
-          <Text style={styles.inputLabel}>NOMOR</Text>
+          <Text style={styles.inputLabel}>NOMOR SARANA</Text>
           <TextInput
             testID="entry-nomor-input"
             value={nomor}
             onChangeText={setNomor}
             style={styles.input}
-            placeholder="Contoh: CC201-01"
             placeholderTextColor={colors.muted}
             autoCapitalize="characters"
           />
