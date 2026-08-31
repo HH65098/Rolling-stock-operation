@@ -1,0 +1,15 @@
+[build]
+  # Perintah build Expo
+  command = "npx expo export"
+  # Folder hasil build
+  publish = "dist"
+
+[build.environment]
+  # Otomatis menyambungkan ke backend Railway tanpa perlu setting UI
+  EXPO_PUBLIC_BACKEND_URL = "https://rolling-stock-operation-kai.up.railway.app"
+
+[[redirects]]
+  # Aturan wajib untuk SPA (Expo Web) agar tidak error 404 Not Found
+  from = "/*"
+  to = "/index.html"
+  status = 200
