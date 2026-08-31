@@ -21,22 +21,6 @@ import { Ionicons } from "@expo/vector-icons";
 
 const mono = Platform.select({ ios: "Courier", android: "monospace" });
 
-const HINTS = [
-  { u: "OPpusat", label: "OPpusat - Operasi Pusat", pwd: "admin123" },
-  { u: "Pusdal1", label: "Pusdal1 - Jakarta", pwd: "pusdal123" },
-  { u: "Pusdal2", label: "Pusdal2 - Bandung", pwd: "pusdal123" },
-  { u: "Pusdal3", label: "Pusdal3 - Cirebon", pwd: "pusdal123" },
-  { u: "Pusdal4", label: "Pusdal4 - Semarang", pwd: "pusdal123" },
-  { u: "Pusdal5", label: "Pusdal5 - Purwokerto", pwd: "pusdal123" },
-  { u: "Pusdal6", label: "Pusdal6 - Yogyakarta", pwd: "pusdal123" },
-  { u: "Pusdal7", label: "Pusdal7 - Madiun", pwd: "pusdal123" },
-  { u: "Pusdal8", label: "Pusdal8 - Surabaya", pwd: "pusdal123" },
-  { u: "Pusdal9", label: "Pusdal9 - Jember", pwd: "pusdal123" },
-  { u: "PusdalV1", label: "PusdalV1 - Medan", pwd: "pusdal123" },
-  { u: "PusdalV2", label: "PusdalV2 - Padang", pwd: "pusdal123" },
-  { u: "PusdalSS", label: "PusdalSS - Sumatera Selatan", pwd: "pusdal123" },
-];
-
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -44,7 +28,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showAccounts, setShowAccounts] = useState(false);
 
   const handleLogin = async () => {
     if (!username.trim() || !password) {
@@ -126,7 +109,6 @@ export default function Login() {
                 style={styles.input}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="Pusdal1 / OPpusat"
                 placeholderTextColor={colors.muted}
               />
             </View>
@@ -175,44 +157,6 @@ export default function Login() {
                 </>
               )}
             </Pressable>
-
-            <Pressable
-              testID="login-show-accounts-toggle"
-              onPress={() => setShowAccounts((v) => !v)}
-              style={styles.hintToggle}
-            >
-              <Ionicons
-                name={showAccounts ? "chevron-up" : "chevron-down"}
-                size={14}
-                color={colors.kaiBlue}
-              />
-              <Text style={styles.hintToggleText}>
-                {showAccounts ? "Sembunyikan" : "Lihat"} daftar akun preset
-              </Text>
-            </Pressable>
-
-            {showAccounts && (
-              <View style={styles.hintList} testID="login-accounts-list">
-                {HINTS.map((h) => (
-                  <Pressable
-                    key={h.u}
-                    testID={`login-hint-${h.u}`}
-                    onPress={() => {
-                      setUsername(h.u);
-                      setPassword(h.pwd);
-                    }}
-                    style={styles.hintItem}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.hintLabel}>{h.label}</Text>
-                    </View>
-                    <View style={styles.hintPwdBadge}>
-                      <Text style={styles.hintPwd}>{h.pwd}</Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </View>
 
           <Text style={styles.footer}>
